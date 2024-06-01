@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GSF/Character/GSFCharacter.h"
+#include "GSF/Component/GSFInputComp.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values

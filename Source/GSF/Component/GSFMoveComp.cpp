@@ -7,6 +7,8 @@
 
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "GSFInputComp.h"
+#include "Camera/CameraComponent.h"
 #include "GSF/GameMode/GSFGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -28,20 +30,40 @@ void UGSFMoveComp::BeginPlay()
 /// @param InputValue 
 void UGSFMoveComp::AddForwardMovementInput(float InputValue)
 {
-	if (InputValue == 0.f)
+	if(character->InputComp()->bPressedManualAimKey)
 	{
-		bInputFwd = false;
-		if (inputBias.Y >= 0)
-			inputBias.Y = FMath::Clamp(inputBias.Y - stopPower, 0, inputBias.Y);
+		if (InputValue == 0.f)
+		{
+			bInputFwd = false;
+			if (inputBias.Y >= 0)
+				inputBias.Y = FMath::Clamp(inputBias.Y - stopPower * manualStopPowerBias, 0, inputBias.Y);
+			else
+				inputBias.Y = FMath::Clamp(inputBias.Y + stopPower * manualStopPowerBias, inputBias.Y, 0);
+		}
 		else
-			inputBias.Y = FMath::Clamp(inputBias.Y + stopPower, inputBias.Y, 0);
+		{
+			bInputFwd = true;
+			inputBias.Y = FMath::Clamp(inputBias.Y + InputValue * airControll * manualAirControllBias, -1, 1); //
+		}
+		inputValue.Y = InputValue;
 	}
 	else
 	{
-		bInputFwd = true;
-		inputBias.Y = FMath::Clamp(inputBias.Y + InputValue * airControll, -1, 1); //
+		if (InputValue == 0.f)
+		{
+			bInputFwd = false;
+			if (inputBias.Y >= 0)
+				inputBias.Y = FMath::Clamp(inputBias.Y - stopPower * stopPowerBias, 0, inputBias.Y);
+			else
+				inputBias.Y = FMath::Clamp(inputBias.Y + stopPower * stopPowerBias, inputBias.Y, 0);
+		}
+		else
+		{
+			bInputFwd = true;
+			inputBias.Y = FMath::Clamp(inputBias.Y + InputValue * airControll * airControllBias, -1, 1); //
+		}
+		inputValue.Y = InputValue;
 	}
-	inputValue.Y = InputValue;
 }
 
 /// @brief 入力
@@ -49,20 +71,40 @@ void UGSFMoveComp::AddForwardMovementInput(float InputValue)
 void UGSFMoveComp::AddRightMovementInput(float InputValue)
 {
 	// 入力が無ければ０に補正していく
-	if (InputValue == 0.f)
+	if(character->InputComp()->bPressedManualAimKey)
 	{
-		bInputRight = false;
-		if (inputBias.X >= 0)
-			inputBias.X = FMath::Clamp(inputBias.X - stopPower, 0, inputBias.X);
+		if (InputValue == 0.f)
+		{
+			bInputRight = false;
+			if (inputBias.X >= 0)
+				inputBias.X = FMath::Clamp(inputBias.X - stopPower * manualStopPowerBias, 0, inputBias.X);
+			else
+				inputBias.X = FMath::Clamp(inputBias.X + stopPower * manualStopPowerBias, inputBias.X, 0);
+		}
 		else
-			inputBias.X = FMath::Clamp(inputBias.X + stopPower, inputBias.X, 0);
+		{
+			bInputRight = true;
+			inputBias.X = FMath::Clamp(inputBias.X + InputValue * manualAirControllBias, -1, 1); //
+		}
+		inputValue.X = InputValue;
 	}
 	else
 	{
-		bInputRight = true;
-		inputBias.X = FMath::Clamp(inputBias.X + InputValue * airControll, -1, 1); //
+		if (InputValue == 0.f)
+		{
+			bInputRight = false;
+			if (inputBias.X >= 0)
+				inputBias.X = FMath::Clamp(inputBias.X - stopPower * stopPowerBias, 0, inputBias.X);
+			else
+				inputBias.X = FMath::Clamp(inputBias.X + stopPower * stopPowerBias, inputBias.X, 0);
+		}
+		else
+		{
+			bInputRight = true;
+			inputBias.X = FMath::Clamp(inputBias.X + InputValue * airControll, -1, 1); //
+		}
+		inputValue.X = InputValue;
 	}
-	inputValue.X = InputValue;
 }
 
 void UGSFMoveComp::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -292,16 +334,33 @@ void UGSFMoveComp::UpdateMove(float DeltaTime)
 	if (character->bDontMove)return;
 
 	// 移動方向と速度
-	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
-	if(IsValid(camera))
-	{
-		FVector Fwd = FVector(camera->arrow->GetForwardVector().X, camera->arrow->GetForwardVector().Y, 0);
-		FVector Right = FVector(camera->arrow->GetRightVector().X, camera->arrow->GetRightVector().Y, 0);
-		FVector2D V = inputBias;
-		V.Normalize();
-		FVector MoveVelocity = Fwd * FMath::Abs(V.Y) * inputBias.Y + Right * FMath::Abs(V.X) * inputBias.X;
-		
-		SweepMove(MoveVelocity, moveSpeed * moveSpeedBias * TIME);
+	if(character->InputComp()->bPressedManualAimKey)
+	{// マニュアルエイム中は２D移動
+		AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
+		if(IsValid(camera))
+		{
+			FVector Up = camera->arrow->GetUpVector();
+			FVector Right = camera->arrow->GetRightVector();
+			FVector2D V = inputBias;
+			V.Normalize();
+			FVector MoveVelocity = Up * FMath::Abs(V.Y) * inputBias.Y + Right * FMath::Abs(V.X) * inputBias.X;
+			manualMoveVector = MoveVelocity;
+			SweepMove(MoveVelocity, moveSpeed * manualSpeedBias * TIME);
+		}
+	}
+	else
+	{// 通常飛行
+		AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
+		if(IsValid(camera))
+		{
+			FVector Fwd = FVector(camera->arrow->GetForwardVector().X, camera->arrow->GetForwardVector().Y, 0);
+			FVector Right = FVector(camera->arrow->GetRightVector().X, camera->arrow->GetRightVector().Y, 0);
+			FVector2D V = inputBias;
+			V.Normalize();
+			FVector MoveVelocity = Fwd * FMath::Abs(V.Y) * inputBias.Y + Right * FMath::Abs(V.X) * inputBias.X;
+			
+			SweepMove(MoveVelocity, moveSpeed * moveSpeedBias * TIME);
+		}
 	}
 }
 
@@ -470,6 +529,15 @@ void UGSFMoveComp::UpdateRotation(float DeltaTime)
 		character->SetActorRotation(rotation);
 		return;
 	}
+
+	// マニュアルエイム中は常にカメラ方向
+	if(character->InputComp()->bPressedManualAimKey)
+	{
+		FRotator rotation = UKismetMathLibrary::FindLookAtRotation(character->GetActorLocation(), character->GetActorLocation() +
+			Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera->camera->GetForwardVector());
+		character->SetActorRotation(rotation);
+		return;
+	}
 	
 	// 入力してないときは回転しない
 	if(!bInputFwd && !bInputRight)return;
@@ -493,6 +561,7 @@ void UGSFMoveComp::UpdateRotation(float DeltaTime)
 /// @param MoveSpeed 速度
 bool UGSFMoveComp::SweepMove(FVector MoveVector, float MoveSpeed)
 {
+	// 通常移動
 	// 座標算出
 	FVector MovePos = character->GetActorLocation();
 	MovePos += MoveVector * MoveSpeed;
@@ -508,8 +577,6 @@ bool UGSFMoveComp::SweepMove(FVector MoveVector, float MoveSpeed)
 		MovePos = character->GetActorLocation();
 		MovePos += alongWallVector * MoveVector.Length() * MoveSpeed;
 		character->SetActorLocation(MovePos, true, &outHit);
-		DrawDebugLine(GetWorld(), outHit.ImpactPoint, outHit.ImpactPoint + outHit.Normal * 500.f, FColor::Red);
-		DrawDebugLine(GetWorld(), character->GetActorLocation(), character->GetActorLocation() + alongWallVector * 500.f, FColor::Green);
 	}
 	return outHit.bBlockingHit;
 }

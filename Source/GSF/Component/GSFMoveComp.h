@@ -80,6 +80,8 @@ protected:
 
 	/// @brief 最後の入力ベクトル
 	FVector2D beforeMoveVector;
+	/// @brief マニュアル移動ベクトル
+	FVector manualMoveVector;
 	/// @brief 前フレーム位置
 	FVector beforePos;
 	
@@ -94,28 +96,31 @@ public:
 	bool bInputFwd;
 	/// @brief 入力
 	bool bInputRight;
-	// @brief 移動速度
+	/// @brief 移動速度
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float moveSpeed = 100.f;
-	// @brief 移動速度倍率
+	/// @brief 移動速度倍率
 	UPROPERTY(BlueprintReadOnly)
 	float moveSpeedBias = 1.f;
-	// @brief グライド移動速度倍率
+	/// @brief グライド移動速度倍率
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float graidSpeedBias = 1.7f;
-	// @brief 急降下移動速度倍率
+	/// @brief マニュアルエイム移動速度倍率
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float manualSpeedBias = 2.f;
+	/// @brief 急降下移動速度倍率
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float diveSpeedBias = 3.5f;
-	// @brief 空中ダッシュスピード
+	/// @brief 空中ダッシュスピード
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float airDashSpeed = 20.f;
-	// @brief 空中ダッシュ減衰
+	/// @brief 空中ダッシュ減衰
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float airDashDeceleration = 14.f;
-	// @brief 空中ジャンプパワー
+	/// @brief 空中ジャンプパワー
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float airJumpPower = 20.f;
-	// @brief 空中ジャンプ減衰
+	/// @brief 空中ジャンプ減衰
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float airJumpDeceleration = 14.f;
 	/// @brief 制動
@@ -126,7 +131,10 @@ public:
 	float airControllBias = 1.f;
 	/// @brief グライド制動倍率
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float graidAirControllBias = 1.5f;
+	float graidAirControllBias = 1.3f;
+	/// @brief マニュアルエイム制動倍率
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float manualAirControllBias = 1.5f;
 	/// @brief 停止力
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float stopPower = 0.01f;
@@ -135,23 +143,26 @@ public:
 	float stopPowerBias = 1.f;
 	/// @brief グライド停止力倍率
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float graidStopPowerBias = 1.5f;
-	// @brief 減速力
+	float graidStopPowerBias = 1.2f;
+	/// @brief マニュアルエイム停止力倍率
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float manualStopPowerBias = 1.5f;
+	/// @brief 減速力
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float friction = 7.f;
-	// @brief 落下速度
+	/// @brief 落下速度
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float gravity = 5.f;
-	// @brief 落下速度倍率
+	/// @brief 落下速度倍率
 	UPROPERTY(BlueprintReadOnly)
 	float gravityBias = 1.f;
-	// @brief グライド落下速度倍率
+	/// @brief グライド落下速度倍率
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float graidGravityBias = 0.2f;
-	// @brief 急降下落下速度
+	/// @brief 急降下落下速度
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float diveGravity = 20.f;
-	// @brief 急降下移行時間
+	/// @brief 急降下移行時間
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float diveThreshold = 5.f;
 	/// @brief 飛翔加速力

@@ -1,5 +1,8 @@
 
 #include "GSFInputComp.h"
+
+#include "GSFMoveComp.h"
+#include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "GSF/Camera/GSFCamera.h"
 #include "GSF/GameMode/GSFGameMode.h"
@@ -237,14 +240,25 @@ void UGSFInputComp::InputAction_ManualAim()
 {
 	if(!character)return;
 
+	InputAction_Concentration_Released();
+	
 	bPressedManualAimKey = true;
 	character->ManualAim(bPressedManualAimKey);
+	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
+	camera->SetManualBoomLength();
+	UGameplayStatics::GetPlayerController(GetWorld(),0)->SetViewTargetWithBlend(camera,0.05f);
 }
 
 void UGSFInputComp::InputAction_ManualAim_Released()
 {
+	if(bPressedConcentrationKey)return;
+	
 	bPressedManualAimKey = false;
 	character->ManualAim(bPressedManualAimKey);
+	UGameplayStatics::GetPlayerController(GetWorld(),0)->
+			SetViewTargetWithBlend(Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera,0.05f);
+	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
+	camera->ResetBoomLength();
 }
 
 void UGSFInputComp::InputAction_AirDash()
@@ -292,16 +306,27 @@ void UGSFInputComp::InputAction_Bullet_Released()
 
 void UGSFInputComp::InputAction_Concentration()
 {
+	
+	InputAction_ManualAim_Released();
+	
 	bPressedConcentrationKey = true;
 	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
-	UGameplayStatics::GetPlayerController(GetWorld(),0)->SetViewTargetWithBlend(camera, 0.1f);
+	UGameplayStatics::GetPlayerController(GetWorld(),0)->SetViewTargetWithBlend(camera, 0.03f);
 	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.2f);
+	camera->camera->SetRelativeLocation(FVector(-5.f, -75.f, 40.f));
+	camera->camera->SetRelativeRotation(FRotator(0.f,0.f,10.f));
 }
 
 void UGSFInputComp::InputAction_Concentration_Released()
 {
+	
+	if(bPressedManualAimKey)return;
+	
 	bPressedConcentrationKey = false;
 	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
-	UGameplayStatics::GetPlayerController(GetWorld(),0)->SetViewTargetWithBlend(camera, 0.1f);
 	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.f);
+	UGameplayStatics::GetPlayerController(GetWorld(),0)->SetViewTargetWithBlend(camera, 0.1f);
+	AGSFCamera* c_camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
+	c_camera->camera->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	c_camera->camera->SetRelativeRotation(FRotator(0.f,0.f,0.f));
 }
