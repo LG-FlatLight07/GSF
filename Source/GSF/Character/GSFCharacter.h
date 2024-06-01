@@ -1,194 +1,156 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Camera/CameraComponent.h"
-#include "GameFramework/Character.h"
+#include "UObject/Interface.h"
+#include "GameFramework/Pawn.h"
 #include "Components/CapsuleComponent.h"
 
-#include "ActionType.h"
-#include "InputKey.h"
-#include "ActionExecutor.h"
-#include "GSFCharacterInterface.h"
-#include "GSF/Ability/GSFAbility.h"
+//#include "GSF/Component/GSFInputComp.h"
 
 #include "GSFCharacter.generated.h"
 
-class AGSFCamera;
-class UGSFAbilityComp;
-class UGSFAnimComp;
 class UGSFMoveComp;
+class UGSFAbilityComp;
 class UGSFInputComp;
 
+/// @brief 
+UENUM(BlueprintType)
+enum class EInputActions : uint8
+{
+	None,
+	
+	LockOn,
+	Attack,
+	Bullet,
+	Jump,
+	AirDash,
+	Glide,
+	Fly,
+	
+	ElementsNum,
+};
+
+UENUM(BlueprintType)
+enum class EAxisInputActions : uint8
+{
+	None,
+	
+	MoveForward,
+	MoveRight,
+	
+	ElementsNum,
+};
+
+/// @brief デフォルトのキャラクタークラス
 UCLASS()
-class GSF_API AGSFCharacter : public ACharacter, public IGSFCharacterInterface
+class GSF_API AGSFCharacter : public APawn
 {
 	GENERATED_BODY()
-
 public:
-
-	// コンポーネント
-	UPROPERTY()
-	UMethodExecutor* executor;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MechaCharacter")
-	UGSFMoveComp* moveComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MechaCharacter")
-	UGSFInputComp* inputComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MechaCharacter")
-	UGSFAnimComp* animComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MechaCharacter")
-	UGSFAbilityComp* abilityComp;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MechaCharacter")
-	AGSFCamera* cameraComp;
-
-protected:
-
-	/// @brief hp
+	/*------------------------------------------------------------------------------------------------------------------------------
+	* 行動管理用フラグ
+	-------------------------------------------------------------------------------------------------------------------------------*/
+	/// @brief 被弾中
+	UPROPERTY(BlueprintReadWrite)
+	bool bInFear;
+	/// @brief 行動不可状態にある
+	UPROPERTY(BlueprintReadWrite)
+	bool bDontMove;
+	/// @brief なにかしらのアクションをしているか(ガードやステップ、技など)
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	float health;
+	bool bTakingAction;
 	
-	/// @brief max hp
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float maxHealth;
-
-private:
-	
-	/// @brief アクション中
-	UPROPERTY(VisibleAnywhere)
-	bool bTakeAction = false;
-
-	/// @brief 空中にいる
-	UPROPERTY(VisibleAnywhere)
-	bool bInAir = false;
-
-	/// @brief グライド中
-	UPROPERTY(VisibleAnywhere)
-	bool bGlide = false;
-
-	/// @brief 飛行中
-	UPROPERTY(VisibleAnywhere)
-	bool bFly = false;
-
-	/// @brief 急降下中
-	UPROPERTY(VisibleAnywhere)
-	bool bDive = false;
-
-	/// @brief 全入力遮断
-	UPROPERTY(VisibleAnywhere)
-	bool bCantInput = false;
-
-	/// @brief 移動入力を受け付けるか
-	UPROPERTY(VisibleAnywhere)
-	bool bCantMove = false;
-
-	/// @brief カメラ入力を受け付けるか
-	UPROPERTY(VisibleAnywhere)
-	bool bCantCamera = false;
-
-	/// @brief 先行入力を受け付けるか
-	UPROPERTY(VisibleAnywhere)
-	bool bCantBufferedInput = false;
-	
-public:
-
-	AGSFCharacter(const FObjectInitializer& ObjectInitializer);
-
 protected:
+	/*------------------------------------------------------------------------------------------------------------------------------
+	* コンポーネント
+	-------------------------------------------------------------------------------------------------------------------------------*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USkeletalMeshComponent* mesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UCapsuleComponent* hitBox;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UGSFMoveComp* moveComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UGSFAbilityComp* abilityComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UGSFInputComp* inputComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UGSFAnimComp* animComp;
+
 	
-	virtual void BeginPlay() override;
-
 public:
-
+	AGSFCharacter();
 	virtual void Tick(float DeltaTime) override;
 	
-public:
-
-	/// @brief ラウンドごとの開始処理(現状 回復＆位置リセット)
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void RestartPlayer();
+	/*------------------------------------------------------------------------------------------------------------------------------
+	* コンポーネント取得
+	-------------------------------------------------------------------------------------------------------------------------------*/
+	// メッシュ取得
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	USkeletalMeshComponent* GetMesh()const { return mesh; }
+	// コリジョン取得
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UCapsuleComponent* GetHitBox()const { return hitBox; }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UGSFAbilityComp* AbilityComp()const{return abilityComp;}
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UGSFMoveComp* MoveComp()const{return moveComp;}
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UGSFInputComp* InputComp()const{return inputComp;}
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UGSFAnimComp* AnimComp()const{return animComp;}
 	
-	/// @brief 体力を減らす
-	/// @param Data ダメージ
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void SubtractHealth(const FAbilityData& Data);
-	
-	/// @brief 被弾
-	/// @param Data ダメージ源
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	bool ReceiveDamage(const FAbilityData& Data);
-
-	/// @brief アクション中
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void SetTakeAction(bool action){bTakeAction = action;}
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
-	bool IsTakingAction()const{return bTakeAction;}
-
-	/// @brief 空中
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void SetIsInAir(bool air){bInAir = air;}
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
-	bool IsInAir()const{return bInAir;}
-
+	/*------------------------------------------------------------------------------------------------------------------------------
+	* 行動制御
+	-------------------------------------------------------------------------------------------------------------------------------*/
+	/// @brief 移動 前後
+	void MoveForward(const float MoveValue);
+	/// @brief 移動 左右
+	void MoveRight(const float MoveValue);
+	/// @brief InputSystemComponentから入力を受け取る
+	UFUNCTION()
+	void TakeAction(enum EInputActions Action);
+	/// @brief 何かしらのアクションをしているか
+	bool IsTakingAction()const;
+	/// @brief ダメージを受ける
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void RecieveDamage();
+	void RecieveDamage_Implementation();
+	/// @brief 怯み
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Fear();
+	void Fear_Implementation();
+	/// @brief 死亡
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Death();
+	void Death_Implementation();
 	/// @brief グライド
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void SetIsGlide(bool glide){bGlide = glide;}
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
-	bool IsGlide()const{return bGlide;}
-
-	/// @brief 飛行
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void SetIsFly(bool fly){bFly = fly;}
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
-	bool IsFly()const{return bFly;}
-
-	/// @brief 急降下
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void SetIsDive(bool dive){bDive = dive;}
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
-	bool IsDive()const{return bDive;}
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Graid(const bool key);
+	void Graid_Implementation(const bool key);
+	/// @brief 空中ダッシュ
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void AirDash();
+	void AirDash_Implementation();
+	/// @brief 空中ジャンプ
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void AirJump();
+	void AirJump_Implementation();
+	/// @brief 飛翔
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Fly();
+	void Fly_Implementation();
+	/// @brief ロックオン
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void LookOn(const bool look);
+	void LookOn_Implementation(const bool look);
 	
-	/// @brief 移動入力を受け付けるか
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void SetCantMove(bool move){bCantMove = move;}
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
-	bool IsCantMove()const{return bCantMove;}
+	/*------------------------------------------------------------------------------------------------------------------------------
+	* 入力制御
+	-------------------------------------------------------------------------------------------------------------------------------*/
+	/// @brief 入力メソッド群のバインド
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	/// @brief カメラ入力を受け付けるか
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void SetCantCamera(bool camera){bCantCamera = camera;}
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
-	bool IsCantCamera()const{return bCantCamera;}
-
-	/// @brief 先行入力を受け付けるか
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void SetCantBufferedInput(bool input){bCantBufferedInput = input;}
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
-	bool IsCantBufferedInput()const{return bCantBufferedInput;}
-	
-	/// @brief キャラクターの入力許可状態をリセット
-	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
-	void ResetCharacterInputPermission();
-	
-	// コンポーネント取得
-	UFUNCTION(BlueprintCallable)
-	virtual UGSFAbilityComp* GetAbilityComp() override{return abilityComp;}
-	UFUNCTION(BlueprintCallable)
-	virtual UGSFAnimComp* GetAnimComp() override{return animComp;}
-	UFUNCTION(BlueprintCallable)
-	virtual UGSFMoveComp* GetMoveComp() override{return moveComp;}
-	UFUNCTION(BlueprintCallable)
-	virtual UGSFInputComp* GetInputComp() override{return inputComp;}
-
-	// カプセルの大きさ取得
-	float GetCapsuleHalfHeight()const{return GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();};
-	
-private:
-
-	/// @brief 行動用イベントメソッド
-	UFUNCTION()
-	void InputHandler(EInput Input, EInputType Type);
-
-	/// @brief 行動用イベントメソッド
-	UFUNCTION()
-	void AxisInputHandler(EInput Input, EInputType Type, float Value);
-
+protected:
+	virtual void BeginPlay() override;
 };

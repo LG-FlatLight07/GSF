@@ -20,19 +20,14 @@ void UGSFAbilityComp::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UGSFAbilityComp::RegisterMethods(UMethodExecutor* Executor)
-{
-	Executor->AddActionMethod([this](const EAction Action, const float& ReactionTime){ExecuteAction(Action, ReactionTime);});
-}
-
 // キーから実行
-void UGSFAbilityComp::ExecuteAction(const EAction Action, const float& ReactionTime)
+void UGSFAbilityComp::ExecuteAction(const EInputActions Action, const float& ReactionTime)
 {
 	if(!abilityData.Contains(Action)) return;
 	
 	// 再生
-	if(!IsValid(character->animComp))return;
-	if(character->animComp->TryPlayMontage(abilityData[Action], 0.f, ReactionTime, 0.f, 0.f))
+	if(!IsValid(character->AnimComp()))return;
+	if(character->AnimComp()->TryPlayMontage(abilityData[Action], 0.f, ReactionTime, 0.f, 0.f))
 	{
 		// 再生中の技データを保管
 		SetActiveAbilityData(abilityData[Action]);

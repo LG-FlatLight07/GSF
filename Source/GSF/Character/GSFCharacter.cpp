@@ -1,240 +1,134 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "GSFCharacter.h"
 
-#include "GSF/Component/GSFAbilityComp.h"
 #include "GSF/Component/GSFInputComp.h"
 #include "GSF/Component/GSFMoveComp.h"
+#include "GSF/Component/GSFAbilityComp.h"
 #include "GSF/Component/GSFAnimComp.h"
-#include "GSF/Camera/GSFCamera.h"
+#include "GSF/GameMode/GSFGameMode.h"
+#include "Kismet/GameplayStatics.h"
 
-#include "Components/CapsuleComponent.h"
 
-AGSFCharacter::AGSFCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UGSFMoveComp>(ACharacter::CharacterMovementComponentName))
+class AGSFCamera;
+
+AGSFCharacter::AGSFCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
-
-	executor = CreateDefaultSubobject<UMethodExecutor>(TEXT("Executor"));
-	moveComp = Cast<UGSFMoveComp>(GetCharacterMovement());
-	inputComp = CreateDefaultSubobject<UGSFInputComp>(TEXT("Input"));
-	animComp = CreateDefaultSubobject<UGSFAnimComp>(TEXT("Anim"));
-	abilityComp = CreateDefaultSubobject<UGSFAbilityComp>(TEXT("Ability"));
-
-	if(moveComp)
-	{
-		moveComp->RegisterMethods(executor);
-	}
-	if(abilityComp)
-	{
-		abilityComp->RegisterMethods(executor);
-	}
+ 	PrimaryActorTick.bCanEverTick = true;
 	
-	if(GetMesh())
-	{
-		GetMesh()->SetRelativeRotation(FRotator(0, -90.f,0));
-		GetMesh()->SetRelativeLocation(FVector(0,0,-50.f));
-	}
+	hitBox = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Box"));
+	mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
+	moveComp = CreateDefaultSubobject<UGSFMoveComp>(TEXT("Move"));
+	inputComp = CreateDefaultSubobject<UGSFInputComp>(TEXT("Input"));
+	abilityComp = CreateDefaultSubobject<UGSFAbilityComp>(TEXT("Ability"));
+	animComp = CreateDefaultSubobject<UGSFAnimComp>(TEXT("Anim"));
 
-	if(GetCapsuleComponent())
-	{
-		GetCapsuleComponent()->InitCapsuleSize(26.f, 52.f);
-	}
-
-	AutoPossessPlayer = EAutoReceiveInput::Player0;
+	if(hitBox)
+		RootComponent = hitBox;
+	if(mesh && hitBox)
+		mesh->SetupAttachment(hitBox);
 }
 
+// Called when the game starts or when spawned
 void AGSFCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// 入力ハンドラー設定
-	if(IsValid(inputComp))
-	{
-		inputComp->onInputEvent.BindDynamic(this, &AGSFCharacter::InputHandler);
-		inputComp->onAxisInputEvent.BindDynamic(this, &AGSFCharacter::AxisInputHandler);
-	}
-
-	// HP設定
-	health = maxHealth;
 }
 
+// Called every frame
 void AGSFCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void AGSFCharacter::RestartPlayer()
+void AGSFCharacter::RecieveDamage_Implementation()
 {
-	health = maxHealth;
 }
 
-void AGSFCharacter::SubtractHealth(const FAbilityData& Data)
+void AGSFCharacter::Fear_Implementation()
 {
-	// HP計算
-	health = FMath::Clamp(health - Data.Damage, 0.f, maxHealth);
-	
-	if(health == 0.f)
+}
+
+void AGSFCharacter::Death_Implementation()
+{
+}
+
+void AGSFCharacter::MoveForward(const float MoveValue)
+{
+	moveComp->AddForwardMovementInput(MoveValue);
+}
+
+void AGSFCharacter::MoveRight(const float MoveValue)
+{
+	moveComp->AddRightMovementInput(MoveValue);
+}
+
+void AGSFCharacter::TakeAction(EInputActions Action)
+{
+	if(Action == EInputActions::AirDash)
 	{
-		// 死亡
-		executor->ExecuteActionMethod(EAction::Death);
+		if(MoveComp()->inputValue.IsZero())
+			AirJump();
+		else
+			AirDash();
+	}
+	if(Action == EInputActions::Fly)
+	{
+		Fly();
+	}
+}
+
+bool AGSFCharacter::IsTakingAction() const
+{
+	return bTakingAction;
+}
+
+void AGSFCharacter::Graid_Implementation(const bool key)
+{
+	if(key)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Graid"));
+		
+		MoveComp()->Graid();
 	}
 	else
 	{
-		// 怯み
-		executor->ExecuteActionMethod(EAction::Fear, Data.FearTime);
-	}
-	// 吹き飛び
-	if(IsValid(GetMoveComp()))
-	{
-		GetMoveComp()->AddForce(Data.ForceVector * Data.Force);
+		MoveComp()->GraidEnd();
 	}
 }
 
-bool AGSFCharacter::ReceiveDamage(const FAbilityData& Data)
+void AGSFCharacter::AirDash_Implementation()
 {
-	if (Data.Damage < 0)return false;
+	UE_LOG(LogTemp, Log, TEXT("AirDash"));
 
-	// hp計算
-	SubtractHealth(Data);
-
-	return true;
+	MoveComp()->AirDash();
 }
 
-void AGSFCharacter::ResetCharacterInputPermission()
+void AGSFCharacter::AirJump_Implementation()
 {
-	SetTakeAction(false);
-	SetCantMove(false);
-	SetCantBufferedInput(false);
+	UE_LOG(LogTemp, Log, TEXT("AirJump"));
+
+	MoveComp()->AirJump();
 }
 
-void AGSFCharacter::InputHandler(EInput Input, EInputType Type)
+void AGSFCharacter::Fly_Implementation()
 {
-	if(bCantInput)return;
+	UE_LOG(LogTemp, Log, TEXT("Fly"));
 	
-	switch (Input)
+	MoveComp()->Fly();
+}
+
+void AGSFCharacter::LookOn_Implementation(const bool look)
+{
+	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
+	if(IsValid(camera))
 	{
-	case EInput::Forward:
-		break;
-	case EInput::Right:
-		break;
-	case EInput::Pitch:
-		break;
-	case EInput::Yaw:
-		break;
-	case EInput::L1:
-		if(Type == EInputType::Long)
-		{
-			executor->ExecuteMethod(EAction::LockOn);
-		}
-		else if(Type == EInputType::Release)
-		{
-
-		}
-		break;
-	case EInput::L2:
-		if(Type == EInputType::Long)
-		{
-			executor->ExecuteMethod(EAction::Concentration);
-		}
-		else if(Type == EInputType::Release)
-		{
-
-		}
-		break;
-	case EInput::R1:
-		if(Type == EInputType::Single)
-		{
-			if(inputComp->IsInput())
-			{
-				UE_LOG(LogTemp, Log, TEXT("Dodge"));
-				executor->ExecuteMethod(EAction::Dodge);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Log, TEXT("Jump"));
-				executor->ExecuteMethod(EAction::Jump);
-			}
-		}
-		else if(Type == EInputType::Double)
-		{
-			UE_LOG(LogTemp, Log, TEXT("Fly"));
-			executor->ExecuteMethod(EAction::Fly);
-		}
-		else if(Type == EInputType::Long)
-		{
-			UE_LOG(LogTemp, Log, TEXT("Glide"));
-			SetIsGlide(true);
-			executor->ExecuteMethod(EAction::Glide);
-		}
-		else if(Type == EInputType::Release)
-		{
-			if(IsGlide())
-			{
-				UE_LOG(LogTemp, Log, TEXT("GlideEnd"));
-				SetIsGlide(false);
-				executor->ExecuteMethod(EAction::GlideEnd);
-			}
-		}
-		break;
-	case EInput::R2:
-		if(Type == EInputType::Long)
-		{
-			UE_LOG(LogTemp, Log, TEXT("Shot"));
-			executor->ExecuteActionMethod(EAction::Shot);
-		}
-		else if(Type == EInputType::Release)
-		{
-			UE_LOG(LogTemp, Log, TEXT("ShotEnd"));
-		}
-		break;
-	case EInput::A:
-		break;
-	case EInput::B:
-		if(Type == EInputType::Single)
-		{
-			UE_LOG(LogTemp, Log, TEXT("Attack"));
-			executor->ExecuteActionMethod(EAction::Attack);
-		}
-		if(Type == EInputType::Long)
-		{
-			UE_LOG(LogTemp, Log, TEXT("HeavyAttack"));
-			executor->ExecuteActionMethod(EAction::HeavyAttack);
-		}
-		break;
-	case EInput::X:
-		break;
-	case EInput::Y:
-		break;
-	default:
-		break;
+		camera->SetManualAim(look);
+		MoveComp()->SetFloat(look);
 	}
 }
 
-void AGSFCharacter::AxisInputHandler(EInput Input, EInputType Type, float Value)
+// Called to bind functionality to input
+void AGSFCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	if(bCantInput)return;
-	
-	switch (Input)
-	{
-	case EInput::Forward:
-		if(bCantMove)return;
-		executor->ExecuteAxisMethod(EAction::MoveForward, Value);
-		break;
-	case EInput::Right:
-		if(bCantMove)return;
-		executor->ExecuteAxisMethod(EAction::MoveRight, Value);
-		break;
-	case EInput::Pitch:
-		if(bCantCamera)return;
-		if(IsValid(cameraComp)) cameraComp->InputAxis_Pitch(Value);
-		break;
-	case EInput::Yaw:
-		if(bCantCamera)return;
-		if(IsValid(cameraComp)) cameraComp->InputAxis_Yaw(Value);
-		break;
-	default:
-		break;
-	}
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	InputComp()->SetupInputComp(PlayerInputComponent);
 }

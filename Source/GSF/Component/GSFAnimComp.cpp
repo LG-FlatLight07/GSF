@@ -15,10 +15,6 @@ void UGSFAnimComp::BeginPlay()
 	Super::BeginPlay();
 
 	character = Cast<AGSFCharacter>(GetOwner());
-	if(IsValid(character))
-	{
-		animInstance = character->GetMesh()->GetAnimInstance();
-	}
 }
 
 void UGSFAnimComp::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -64,9 +60,6 @@ bool UGSFAnimComp::TryPlayMontage(const FAbilityData& Data, float FrontTime, flo
 	// 本当はセクションの開始にバインドしたい
 	animInstance->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UGSFAnimComp::OnMontageSectionStart);
 	animInstance->OnPlayMontageNotifyBegin.AddDynamic(this, &UGSFAnimComp::OnMontageSectionStart);
-
-	// キャラクターの状態リセット
-	character->ResetCharacterInputPermission();
 	
 	// 再生
 	animInstance->Montage_Play(data.MontageToPlay, data.PlayRate[static_cast<uint8>(EMontageSectionStage::FrontGap)]);

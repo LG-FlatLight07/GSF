@@ -13,7 +13,9 @@ class GSF_API AGSFGameMode : public AGameMode
 	GENERATED_BODY()
 
 public:
-
+	UPROPERTY(BlueprintReadWrite)
+	AGSFCamera* camera;
+	
 protected:
 	UFUNCTION()
 	virtual void BeginPlay() override;

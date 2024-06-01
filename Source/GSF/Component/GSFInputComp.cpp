@@ -1,11 +1,49 @@
 
 #include "GSFInputComp.h"
-
 #include "Components/InputComponent.h"
+#include "GSF/Camera/GSFCamera.h"
+#include "GSF/GameMode/GSFGameMode.h"
+#include "Kismet/GameplayStatics.h"
 
 UGSFInputComp::UGSFInputComp()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+}
+
+void UGSFInputComp::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+		
+	if(!character)return;
+
+	// 二段入力
+	DoubleInputCount(DeltaTime);
+
+	// 先行入力
+	BufferedInputCount(DeltaTime);
+
+	// 長押し判定
+	LongInputCheck(DeltaTime, waitForGraidInputTimeLimit, graidInputTimer, bPresseGraidKey);
+}
+
+void UGSFInputComp::SetupInputComp(UInputComponent* PlayerInputComponent)
+{
+	if (PlayerInputComponent)
+	{
+		PlayerInputComponent->BindAxis("MoveForward", this, &UGSFInputComp::InputAxis_MoveForward);
+		PlayerInputComponent->BindAxis("MoveRight", this, &UGSFInputComp::InputAxis_MoveRight);
+
+		PlayerInputComponent->BindAxis("Pitch", this, &UGSFInputComp::InputAxis_Pitch);
+		PlayerInputComponent->BindAxis("Yaw", this, &UGSFInputComp::InputAxis_Yaw);
+		
+		PlayerInputComponent->BindAction("Attack", IE_Pressed,  this, &UGSFInputComp::InputAction_Attack);
+		PlayerInputComponent->BindAction("LookOn", IE_Pressed,  this, &UGSFInputComp::InputAction_LookOn);
+		PlayerInputComponent->BindAction("LookOn", IE_Released,  this, &UGSFInputComp::InputAction_LookOn_Released);
+		PlayerInputComponent->BindAction("AirDash", IE_Pressed,  this, &UGSFInputComp::InputAction_AirDash);
+		PlayerInputComponent->BindAction("AirDash", IE_Released, this, &UGSFInputComp::InputAction_AirDash_Released);
+		PlayerInputComponent->BindAction("Bullet", IE_Pressed,  this, &UGSFInputComp::InputAction_Bullet);
+		PlayerInputComponent->BindAction("Bullet", IE_Released, this, &UGSFInputComp::InputAction_Bullet_Released);
+	}
 }
 
 void UGSFInputComp::BeginPlay()
@@ -13,49 +51,6 @@ void UGSFInputComp::BeginPlay()
 	Super::BeginPlay();
 
 	character = Cast<AGSFCharacter>(GetOwner());
-	if(IsValid(character))
-	{
-		InputBind(character->InputComponent);
-	}
-}
-
-void UGSFInputComp::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// 二段入力処理
-	DoubleInputCount(DeltaTime);
-	// 先行入力処理
-	BufferedInputCount(DeltaTime);
-	// 長押し入力処理
-	LongInputCount(DeltaTime);
-}
-
-void UGSFInputComp::InputBind(UInputComponent* InputComponent)
-{
-	if(IsValid(InputComponent))
-	{
-		InputComponent->BindAxis("MoveForward", this, &UGSFInputComp::Forward);
-		InputComponent->BindAxis("MoveRight", this, &UGSFInputComp::Right);
-		
-		InputComponent->BindAxis("Pitch", this, &UGSFInputComp::Pitch);
-		InputComponent->BindAxis("Yaw", this, &UGSFInputComp::Yaw);
-		
-		InputComponent->BindAction("A", IE_Pressed, this, &UGSFInputComp::A);
-		InputComponent->BindAction("B", IE_Pressed, this, &UGSFInputComp::B);
-		InputComponent->BindAction("X", IE_Pressed, this, &UGSFInputComp::X);
-		InputComponent->BindAction("Y", IE_Pressed, this, &UGSFInputComp::Y);
-		
-		InputComponent->BindAction("L1", IE_Pressed, this, &UGSFInputComp::L1);
-		InputComponent->BindAction("L1", IE_Released, this, &UGSFInputComp::L1_Release);
-		InputComponent->BindAction("R1", IE_Pressed, this, &UGSFInputComp::R1);
-		InputComponent->BindAction("R1", IE_Released, this, &UGSFInputComp::R1_Release);
-
-		InputComponent->BindAction("L2", IE_Pressed, this, &UGSFInputComp::L2);
-		InputComponent->BindAction("L2", IE_Released, this, &UGSFInputComp::L2_Release);
-		InputComponent->BindAction("R2", IE_Pressed, this, &UGSFInputComp::R2);
-		InputComponent->BindAction("R2", IE_Released, this, &UGSFInputComp::R2_Release);
-	}
 }
 
 void UGSFInputComp::BufferedInputCount(float DeltaTime)
@@ -83,26 +78,22 @@ void UGSFInputComp::ExecutePendingActions()
 	// 何かのアクションを実行してたらやめる
 	if (character->IsTakingAction())return;
 	// 不正値を弾く
-	if (WaitingAction.Key == EInput::None)return;
-	if (WaitingAction.Key == EInput::ElementsNum)return;
+	if (WaitingAction == EInputActions::None)return;
+	if (WaitingAction == EInputActions::ElementsNum)return;
 	
 	// Characterに通知
-	if(onInputEvent.IsBound())
-	{
-		onInputEvent.Execute(WaitingAction.Key, WaitingAction.Value);
-	}
+	character->TakeAction(WaitingAction);
 
 	// 待機をやめる
 	StopWaitForAction();
 }
 
-void UGSFInputComp::WaitForAction(const EInput Input, const EInputType Type)
+void UGSFInputComp::WaitForAction(EInputActions Action)
 {
 	// アクションを待機中に
 	bWaitingAction = true;
 	// 待機中のアクションを変更
-	WaitingAction.Key = Input;
-	WaitingAction.Value = Type;
+	WaitingAction = Action;
 	// 待機可能時間をリセット
 	bufferedInputTimer = 0.f;
 }
@@ -112,39 +103,55 @@ void UGSFInputComp::StopWaitForAction()
 	// アクションの待機をやめる
 	bWaitingAction = false;
 	// 待機中のアクションを変更
-	WaitingAction.Key = EInput::None;
-	WaitingAction.Value = EInputType::None;
+	WaitingAction = EInputActions::None;
 	// 待機可能時間をリセット
 	bufferedInputTimer = 0.f;
 }
 
-bool UGSFInputComp::DoubleInputCheck(const EInput Action)
+bool UGSFInputComp::DoubleInputCheck(const EInputActions Action, const EInputActions ExAction = EInputActions::None)
 {
-	if(Action == EInput::None)return false;
-	if(Action == EInput::ElementsNum)return false;
-	
-	if(firstInputAction == Action && bWaitForDoubleInput)
-	{
-		if (character->IsTakingAction())
+	// 入力がある
+    if (Action == EInputActions::None)return false;
+
+	// 二回入力のフラグが立っている
+    if (bWaitForDoubleInput)
+    {
+		// 一回目の入力と今回の入力が違う
+		if (beforeInputAction != Action)
 		{
-			if(character->IsCantBufferedInput())return false;
-			WaitForAction(Action, EInputType::Double);
+			// 二回入力の猶予管理タイマーをリセット
+			doubleInputTimer = 0.f;
+			return false;
 		}
-		else
-		{
-			onInputEvent.Execute(Action, EInputType::Double);
-		}
-		firstInputAction = EInput::None;
-		bWaitForDoubleInput = false;
-		return true;
-	}
-	firstInputAction = Action;
-	bWaitForDoubleInput = true;
-	doubleInputTimer = 0.f;
+	    
+	    // 二回入力成功
+    	if(ExAction == EInputActions::None)return false;
+	    if (character->IsTakingAction())
+	    {
+    		WaitForAction(ExAction);
+	    }
+	    else
+	    {
+    		character->TakeAction(ExAction);
+	    }
+    	
+	    // フラグ削除
+	    bWaitForDoubleInput = false;
+    	return true;
+    }
+    else
+    {
+	    // 二回入力のフラグを立てる
+	    bWaitForDoubleInput = true;
+	    // 二回入力の猶予管理タイマーをリセット
+	    doubleInputTimer = 0.f;
+    }
+    // 前回の入力値を保存
+    beforeInputAction = Action;
 	return false;
 }
 
-void UGSFInputComp::DoubleInputCount(const float DeltaTime)
+void UGSFInputComp::DoubleInputCount(float DeltaTime)
 {
 	// 二回入力の猶予カウント
 	if (bWaitForDoubleInput)
@@ -157,204 +164,126 @@ void UGSFInputComp::DoubleInputCount(const float DeltaTime)
 	}
 }
 
-void UGSFInputComp::LongInputCount(const float DeltaTime)
+void UGSFInputComp::LongInputCheck(const float DeltaTime, const float Limit, float& Counter, bool& Action)
 {
-	for(const auto& Key : pressedFlg)
+	if(!Action)
 	{
-		if(pressedFlg[Key.Key] == false)continue;
-		
-		if(pressedTimer[Key.Key] >= longInputTime)
-		{
-			if (character->IsTakingAction())
-			{
-				if(character->IsCantBufferedInput())return;
-				WaitForAction(Key.Key, EInputType::Long);
-			}
-			else
-			{
-				onInputEvent.Execute(Key.Key, EInputType::Long);
-			}
-			pressedFlg[Key.Key] = false;
-			pressedTimer[Key.Key] = 0.f;
-			continue;
-		}
-		pressedTimer[Key.Key] += DeltaTime;
+		Counter = 0.f;
+		return;
 	}
+	if(Counter >= Limit)
+	{
+		// 仮
+		EventGraid();
+
+		Counter = 0.f;
+		Action = false;
+		UE_LOG(LogTemp, Log, TEXT("Execute"));
+		
+		return;
+	}
+	UE_LOG(LogTemp, Log, TEXT("Count"));
+	Counter += DeltaTime;
 }
 
-void UGSFInputComp::Input(const EInput Action, const EInputType Type)
+void UGSFInputComp::EventGraid()
 {
-	if(DoubleInputCheck(Action))return;
-	
+	character->Graid_Implementation(bPresseGraidKey);
+}
+
+void UGSFInputComp::InputAxis_Pitch(const float Value)
+{
+	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
+	if(IsValid(camera))
+		camera->InputAxis_Pitch(Value);
+}
+
+void UGSFInputComp::InputAxis_Yaw(const float Value)
+{
+	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
+	if(IsValid(camera))
+		camera->InputAxis_Yaw(Value);
+}
+
+void UGSFInputComp::InputAxis_MoveForward(const float Value)
+{
+	if(!character)return;
+	// キャラクターの移動メソッド
+	character->MoveForward(Value);
+}
+
+void UGSFInputComp::InputAxis_MoveRight(const float Value)
+{
+	if(!character)return;
+	// キャラクターの移動メソッド
+	character->MoveRight(Value);
+}
+
+void UGSFInputComp::InputAction_Attack()
+{
 	if (character->IsTakingAction())
 	{
-		if(character->IsCantBufferedInput())return;
-		WaitForAction(Action, Type);
-	}
-	else if(onInputEvent.IsBound())
-	{
-		onInputEvent.Execute(Action, Type);
-	}
-}
-
-void UGSFInputComp::LongInput(const EInput Action)
-{
-	// 二段入力検知
-	if(DoubleInputCheck(Action))return;
-
-	// 長押し待機開始
-	if(pressedFlg.Contains(Action))
-	{
-		pressedFlg[Action] = true;
-		if(pressedTimer.Contains(Action))
-		{
-			pressedTimer[Action] = 0.f;
-		}
-		else
-		{
-			pressedTimer.Add(Action, 0.f);
-		}
+		WaitForAction(EInputActions::Attack);
 	}
 	else
 	{
-		pressedFlg.Add(Action, true);
-		if(pressedTimer.Contains(Action))
-		{
-			pressedTimer[Action] = 0.f;
-		}
-		else
-		{
-			pressedTimer.Add(Action, 0.f);
-		}
+		character->TakeAction(EInputActions::Attack);
+	}
+}
+
+void UGSFInputComp::InputAction_LookOn()
+{
+	if(!character)return;
+
+	bLookOn = true;
+	character->LookOn(bLookOn);
+}
+
+void UGSFInputComp::InputAction_LookOn_Released()
+{
+	bLookOn = false;
+	character->LookOn(bLookOn);
+}
+
+void UGSFInputComp::InputAction_AirDash()
+{
+	if(!character)return;
+
+	// グライドの長押し判定
+	bPresseGraidKey = true;
+	
+	// 二段入力に成功
+	if(DoubleInputCheck(EInputActions::AirDash, EInputActions::Fly))
+	{
+		return;
 	}
 
-	// 単押し
+	// 行動中
 	if (character->IsTakingAction())
 	{
-		if(character->IsCantBufferedInput())return;
-		WaitForAction(Action, EInputType::Single);
+		// 待機
+		WaitForAction(EInputActions::AirDash);
 	}
-	else if(onInputEvent.IsBound())
+	// 停止中
+	else
 	{
-		onInputEvent.Execute(Action, EInputType::Single);
+		// 実行
+		character->TakeAction(EInputActions::AirDash);
 	}
 }
 
-void UGSFInputComp::Forward(const float Value)
+void UGSFInputComp::InputAction_AirDash_Released()
 {
-	input.Y = Value;
-	if(onAxisInputEvent.IsBound())
-	{
-		onAxisInputEvent.Execute(EInput::Forward, EInputType::Single, Value);
-	}
+	bPresseGraidKey = false;
+	character->Graid_Implementation(bPresseGraidKey);
 }
 
-void UGSFInputComp::Right(const float Value)
+void UGSFInputComp::InputAction_Bullet()
 {
-	input.X = Value;
-	if(onAxisInputEvent.IsBound())
-	{
-		onAxisInputEvent.Execute(EInput::Right, EInputType::Single, Value);
-	}
+	bPresseBulletKey = true;
 }
 
-void UGSFInputComp::Pitch(const float Value)
+void UGSFInputComp::InputAction_Bullet_Released()
 {
-	if(onAxisInputEvent.IsBound())
-	{
-		onAxisInputEvent.Execute(EInput::Pitch, EInputType::Single, Value);
-	}
+	bPresseBulletKey = false;
 }
-
-void UGSFInputComp::Yaw(const float Value)
-{
-	if(onAxisInputEvent.IsBound())
-	{
-		onAxisInputEvent.Execute(EInput::Yaw, EInputType::Single, Value);
-	}
-}
-
-void UGSFInputComp::A()
-{
-	Input(EInput::A, EInputType::Single);
-}
-
-void UGSFInputComp::B()
-{
-	Input(EInput::B, EInputType::Single);
-}
-
-void UGSFInputComp::X()
-{
-	Input(EInput::X, EInputType::Single);
-}
-
-void UGSFInputComp::Y()
-{
-	Input(EInput::Y, EInputType::Single);
-}
-
-void UGSFInputComp::L1()
-{
-	LongInput(EInput::L1);
-}
-
-void UGSFInputComp::L1_Release()
-{
-	pressedFlg[EInput::L1] = false;
-	pressedTimer[EInput::L1] = 0.f;
-
-	if(onInputEvent.IsBound())
-	{
-		onInputEvent.Execute(EInput::L1, EInputType::Release);
-	}
-}
-
-void UGSFInputComp::L2()
-{
-	LongInput(EInput::L2);
-}
-
-void UGSFInputComp::L2_Release()
-{
-	pressedFlg[EInput::L2] = false;
-	pressedTimer[EInput::L2] = 0.f;
-	
-	if(onInputEvent.IsBound())
-	{
-		onInputEvent.Execute(EInput::L2, EInputType::Release);
-	}
-}
-
-void UGSFInputComp::R1()
-{
-	LongInput(EInput::R1);
-}
-
-void UGSFInputComp::R1_Release()
-{
-	pressedFlg[EInput::R1] = false;
-	pressedTimer[EInput::R1] = 0.f;
-	
-	if(onInputEvent.IsBound())
-	{
-		onInputEvent.Execute(EInput::R1, EInputType::Release);
-	}
-}
-
-void UGSFInputComp::R2()
-{
-	LongInput(EInput::R2);
-}
-
-void UGSFInputComp::R2_Release()
-{
-	pressedFlg[EInput::R2] = false;
-	pressedTimer[EInput::R2] = 0.f;
-	
-	if(onInputEvent.IsBound())
-	{
-		onInputEvent.Execute(EInput::R2, EInputType::Release);
-	}
-}
-

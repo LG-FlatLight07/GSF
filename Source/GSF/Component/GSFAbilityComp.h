@@ -5,13 +5,12 @@
 #include "Components/ActorComponent.h"
 
 #include "GSF/Character/GSFCharacter.h"
-#include "GSF/Component/GSFComponentInterface.h"
 #include "GSF/Ability/GSFAbility.h"
 
 #include "GSFAbilityComp.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GSF_API UGSFAbilityComp : public UActorComponent, public IGSFComponentInterface
+class GSF_API UGSFAbilityComp : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -19,7 +18,7 @@ protected:
 	
 	/// @brief 装備中の技データ
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<EAction, FAbilityData> abilityData = {};
+	TMap<EInputActions, FAbilityData> abilityData = {};
 
 private:
 
@@ -45,14 +44,11 @@ public:
 
 public:
 
-	/// @brief characterにメソッド登録
-	virtual  void RegisterMethods(UMethodExecutor* Executor) override;
-
 	/// @brief アビリティ発動
 	/// @param Action 入力
 	/// @param ReactionTime 入力
 	UFUNCTION(BlueprintCallable, Category = "MechaAbility")
-	void ExecuteAction(const EAction Action, const float& ReactionTime = 0.f);
+	void ExecuteAction(const EInputActions Action, const float& ReactionTime = 0.f);
 	
 	/// @brief 実行中の技データを取得
 	UFUNCTION(BlueprintCallable)

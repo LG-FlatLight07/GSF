@@ -32,7 +32,7 @@ void AGSFCamera::BeginPlay()
 
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetViewTarget(this);
 	controlledPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	Cast<AGSFCharacter>(controlledPawn)->cameraComp = this;
+	//Cast<AGSFCharacter>(controlledPawn)->cameraComp = this;
 }
 
 void AGSFCamera::UpdateRotation(const float DeltaTime)
