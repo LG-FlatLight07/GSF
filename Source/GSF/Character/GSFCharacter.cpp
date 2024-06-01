@@ -146,29 +146,47 @@ void AGSFCharacter::InputHandler(EInput Input, EInputType Type)
 	case EInput::R1:
 		if(Type == EInputType::Single)
 		{
-			executor->ExecuteMethod(EAction::Dodge);
+			if(inputComp->IsInput())
+			{
+				UE_LOG(LogTemp, Log, TEXT("Dodge"));
+				executor->ExecuteMethod(EAction::Dodge);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("Jump"));
+				executor->ExecuteMethod(EAction::Jump);
+			}
 		}
 		else if(Type == EInputType::Double)
 		{
+			UE_LOG(LogTemp, Log, TEXT("Fly"));
 			executor->ExecuteMethod(EAction::Fly);
 		}
 		else if(Type == EInputType::Long)
 		{
+			UE_LOG(LogTemp, Log, TEXT("Glide"));
+			SetIsGlide(true);
 			executor->ExecuteMethod(EAction::Glide);
 		}
 		else if(Type == EInputType::Release)
 		{
-
+			if(IsGlide())
+			{
+				UE_LOG(LogTemp, Log, TEXT("GlideEnd"));
+				SetIsGlide(false);
+				executor->ExecuteMethod(EAction::GlideEnd);
+			}
 		}
 		break;
 	case EInput::R2:
 		if(Type == EInputType::Long)
 		{
+			UE_LOG(LogTemp, Log, TEXT("Shot"));
 			executor->ExecuteActionMethod(EAction::Shot);
 		}
 		else if(Type == EInputType::Release)
 		{
-
+			UE_LOG(LogTemp, Log, TEXT("ShotEnd"));
 		}
 		break;
 	case EInput::A:
@@ -176,10 +194,12 @@ void AGSFCharacter::InputHandler(EInput Input, EInputType Type)
 	case EInput::B:
 		if(Type == EInputType::Single)
 		{
+			UE_LOG(LogTemp, Log, TEXT("Attack"));
 			executor->ExecuteActionMethod(EAction::Attack);
 		}
 		if(Type == EInputType::Long)
 		{
+			UE_LOG(LogTemp, Log, TEXT("HeavyAttack"));
 			executor->ExecuteActionMethod(EAction::HeavyAttack);
 		}
 		break;

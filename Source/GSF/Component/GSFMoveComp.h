@@ -36,7 +36,11 @@ private:
 
 	// @brief スピード
 	UPROPERTY(EditAnywhere, Category = "MechaMovement")
-	float moveVelocity = 70.f;
+	float moveSpeed = 70.f;
+
+	// @brief グライドスピード
+	UPROPERTY(EditAnywhere, Category = "MechaMovement")
+	float glideSpeed = 70.f;
 
 	// @brief 摩擦
 	UPROPERTY(EditAnywhere, Category = "MechaMovement")
@@ -48,7 +52,7 @@ private:
 
 	// @brief 大ジャンプ力
 	UPROPERTY(EditAnywhere, Category = "MechaMovement")
-	float bigJumpPower = 18.f;
+	float highJumpPower = 18.f;
 
 	// @brief ジャンプ力
 	UPROPERTY(EditAnywhere, Category = "MechaMovement")
@@ -56,11 +60,23 @@ private:
 
 	// @brief 大ジャンプ力
 	UPROPERTY(EditAnywhere, Category = "MechaMovement")
-	float bigDodgePower = 18.f;
+	float longDodgePower = 18.f;
 	
 	// @brief 重力
 	UPROPERTY(EditAnywhere, Category = "MechaMovement")
 	float gravity = 1.f;
+
+	// @brief グライド重力
+	UPROPERTY(EditAnywhere, Category = "MechaMovement")
+	float glideGravity = 1.f;
+
+	// @brief 制動
+	UPROPERTY(EditAnywhere, Category = "MechaMovement")
+	float control = 1.2f;
+
+	// @brief グライド制動
+	UPROPERTY(EditAnywhere, Category = "MechaMovement")
+	float glideControl = 1.0f;
 
 protected:
 
@@ -85,6 +101,12 @@ protected:
 	/// @brief 物理挙動の当たり制御
 	virtual void PhysWalking(float deltaTime, int32 Iterations) override;
 
+	/// @brief 物理挙動の落下制御
+	virtual void PhysFalling(float deltaTime, int32 Iterations) override;
+
+	/// @brief 物理挙動の落下制御
+	virtual void PhysFlying(float deltaTime, int32 Iterations) override;
+	
 #pragma endregion 
 	
 public:
@@ -123,6 +145,9 @@ private:
 
 	/// @brief 
 	void Glide();
+
+	/// @brief 
+	void Glide_End();
 	
 	/// @brief 
 	void Landing();

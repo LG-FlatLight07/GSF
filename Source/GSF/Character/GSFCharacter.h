@@ -60,21 +60,33 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	bool bInAir = false;
 
+	/// @brief グライド中
+	UPROPERTY(VisibleAnywhere)
+	bool bGlide = false;
+
+	/// @brief 飛行中
+	UPROPERTY(VisibleAnywhere)
+	bool bFly = false;
+
+	/// @brief 急降下中
+	UPROPERTY(VisibleAnywhere)
+	bool bDive = false;
+
 	/// @brief 全入力遮断
 	UPROPERTY(VisibleAnywhere)
-	bool bCantInput = true;
+	bool bCantInput = false;
 
 	/// @brief 移動入力を受け付けるか
 	UPROPERTY(VisibleAnywhere)
-	bool bCantMove = true;
+	bool bCantMove = false;
 
 	/// @brief カメラ入力を受け付けるか
 	UPROPERTY(VisibleAnywhere)
-	bool bCantCamera = true;
+	bool bCantCamera = false;
 
 	/// @brief 先行入力を受け付けるか
 	UPROPERTY(VisibleAnywhere)
-	bool bCantBufferedInput = true;
+	bool bCantBufferedInput = false;
 	
 public:
 
@@ -115,6 +127,24 @@ public:
 	void SetIsInAir(bool air){bInAir = air;}
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
 	bool IsInAir()const{return bInAir;}
+
+	/// @brief グライド
+	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
+	void SetIsGlide(bool glide){bGlide = glide;}
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
+	bool IsGlide()const{return bGlide;}
+
+	/// @brief 飛行
+	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
+	void SetIsFly(bool fly){bFly = fly;}
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
+	bool IsFly()const{return bFly;}
+
+	/// @brief 急降下
+	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")
+	void SetIsDive(bool dive){bDive = dive;}
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MechaCharacter")
+	bool IsDive()const{return bDive;}
 	
 	/// @brief 移動入力を受け付けるか
 	UFUNCTION(BlueprintCallable, Category = "MechaCharacter")

@@ -27,6 +27,9 @@ private:
 	/// @brief キャラクター
 	UPROPERTY()
 	AGSFCharacter* character;
+
+	/// @brief 入力値
+	FVector2D input;
 	
 	/// @brief なんらかのアクションを待機中
     bool bWaitingAction;
@@ -47,6 +50,14 @@ private:
     float waitForDoubleInputTimeLimit = 0.3f;
     /// @brief 二回入力の猶予時間をカウントする
     float doubleInputTimer;
+
+	/// @brief キーを押してる
+	TMap<EInput, bool> pressedFlg;
+	/// @brief 長押しタイマー
+	TMap<EInput, float> pressedTimer;
+	/// @brief 長押し判定時間
+	UPROPERTY(EditAnywhere)
+	float longInputTime;
 	
 public:
 	
@@ -60,6 +71,11 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+public:
+
+	/// @brief 入力があるか
+	bool IsInput()const{ return !input.IsZero();}
+	
 private:
 
 	/// @brief 入力バインド
@@ -77,10 +93,15 @@ private:
 	/// @brief 二回入力の判定
 	bool DoubleInputCheck(const EInput Action);
 	/// @brief 二回入力の猶予カウント
-	void DoubleInputCount(float DeltaTime);
+	void DoubleInputCount(const float DeltaTime);
+
+	/// @brief 長押しカウント
+	void LongInputCount(const float DeltaTime);
 
 	/// @brief 入力試行
 	void Input(const EInput Action, const EInputType Type);
+	/// @brief 長押し入力試行
+	void LongInput(const EInput Action);
 
 	void A();
 	void B();
@@ -90,10 +111,10 @@ private:
 	void L2();
 	void R1();
 	void R2();
-	void L1_();
-	void L2_();
-	void R1_();
-	void R2_();
+	void L1_Release();
+	void L2_Release();
+	void R1_Release();
+	void R2_Release();
 
 	void Forward(const float Value);
 	void Right(const float Value);

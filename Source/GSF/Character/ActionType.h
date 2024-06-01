@@ -21,6 +21,7 @@ enum class EAction : uint8
 	LongDodge,
 	Fly,
 	Glide,
+	GlideEnd,
 
 	MoveForward,	// ws
 	MoveRight,		// ad

@@ -16,18 +16,18 @@ void UGSFMoveComp::BeginPlay()
 	character = Cast<AGSFCharacter>(GetOwner());
 
 	//-------------------------------------------------
-	MaxWalkSpeed = moveVelocity;
+	MaxWalkSpeed = moveSpeed;
+	MaxFlySpeed = moveSpeed;
 	GroundFriction = friction;
 	GravityScale = gravity;
 	JumpZVelocity = jumpPower;
+	AirControl = control;
 }
 
 void UGSFMoveComp::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	MovementMode = MOVE_Falling;
-
+	SetMovementMode(MOVE_Falling);
 	UpdateIsInAir();
 }
 
@@ -57,8 +57,17 @@ bool UGSFMoveComp::IsFalling() const
 
 void UGSFMoveComp::PhysWalking(float deltaTime, int32 Iterations)
 {
-	// 親クラスのPhysWalkingを呼び出す
 	Super::PhysWalking(deltaTime, Iterations);
+}
+
+void UGSFMoveComp::PhysFalling(float deltaTime, int32 Iterations)
+{
+	Super::PhysFalling(deltaTime, Iterations);
+}
+
+void UGSFMoveComp::PhysFlying(float deltaTime, int32 Iterations)
+{
+	Super::PhysFlying(deltaTime, Iterations);
 }
 
 void UGSFMoveComp::RegisterMethods(UMethodExecutor* Executor)
@@ -69,6 +78,7 @@ void UGSFMoveComp::RegisterMethods(UMethodExecutor* Executor)
 	Executor->AddMethod([this](){LongDodge();}, EAction::LongDodge);
 	Executor->AddMethod([this](){Fly();}, EAction::Fly);
 	Executor->AddMethod([this](){Glide();}, EAction::Glide);
+	Executor->AddMethod([this](){Glide_End();}, EAction::GlideEnd);
 
 	Executor->AddAxisMethod([this](float Value){MoveRight(Value);}, EAction::MoveRight);
 	Executor->AddAxisMethod([this](float Value){MoveForward(Value);}, EAction::MoveForward);
@@ -119,7 +129,8 @@ void UGSFMoveComp::MoveForward(float Value)
 		FVector moveVector = character->cameraComp->camera->GetForwardVector();
 		moveVector.Z = 0.f;
 
-		AddInputVector(moveVector * moveVelocity * Value, false);
+		character->AddMovementInput(moveVector, moveSpeed * Value);
+		//AddInputVector(moveVector * moveVelocity * Value, false);
 	}
 }
 
@@ -133,7 +144,8 @@ void UGSFMoveComp::MoveRight(float Value)
 		FVector moveVector = character->cameraComp->camera->GetRightVector();
 		moveVector.Z = 0.f;
 
-		AddInputVector(moveVector * moveVelocity * Value, false);
+		character->AddMovementInput(moveVector, moveSpeed * Value);
+		//AddInputVector(moveVector * moveVelocity * Value, false);
 	}
 }
 
@@ -154,7 +166,7 @@ void UGSFMoveComp::HighJump()
 	
 	// 垂直ジャンプ
 	FVector launchVector = FVector::ZeroVector;
-	launchVector.Z = bigJumpPower;
+	launchVector.Z = highJumpPower;
 	
 	Launch(launchVector);
 }
@@ -164,10 +176,13 @@ void UGSFMoveComp::Dodge()
 	if(!IsValid(character))return;
 	if(!IsValid(character->cameraComp))return;
 	
-	// 垂直ジャンプ
-	FVector launchVector = character->cameraComp->camera->GetForwardVector() * input.Y + character->cameraComp->camera->GetRightVector() * input.X;
-	launchVector *= dodgePower;
-	Launch(launchVector);
+	FVector forward = character->cameraComp->camera->GetForwardVector();
+	forward.Z = 0.f;
+	FVector right = character->cameraComp->camera->GetRightVector();
+	right.Z = 0.f;
+	FVector launch = forward * input.Y + right * input.X;
+	launch *= dodgePower;
+	Launch(launch);
 }
 
 void UGSFMoveComp::LongDodge()
@@ -175,10 +190,13 @@ void UGSFMoveComp::LongDodge()
 	if(!IsValid(character))return;
 	if(!IsValid(character->cameraComp))return;
 	
-	// 垂直ジャンプ
-	FVector launchVector = character->cameraComp->camera->GetForwardVector() * input.Y + character->cameraComp->camera->GetRightVector() * input.X;
-	launchVector *= bigDodgePower;
-	Launch(launchVector);
+	FVector forward = character->cameraComp->camera->GetForwardVector();
+	forward.Z = 0.f;
+	FVector right = character->cameraComp->camera->GetRightVector();
+	right.Z = 0.f;
+	FVector launch = forward * input.Y + right * input.X;
+	launch *= longDodgePower;
+	Launch(launch);
 }
 
 void UGSFMoveComp::Fly()
@@ -188,7 +206,16 @@ void UGSFMoveComp::Fly()
 
 void UGSFMoveComp::Glide()
 {
-	
+	MaxFlySpeed = glideSpeed;
+	GravityScale = glideGravity;
+	AirControl = glideControl;
+}
+
+void UGSFMoveComp::Glide_End()
+{
+	MaxFlySpeed = moveSpeed;
+	GravityScale = gravity;
+	AirControl = control;
 }
 
 void UGSFMoveComp::Landing()
