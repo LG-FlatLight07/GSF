@@ -116,7 +116,7 @@ void AGSFCharacter::Fly_Implementation()
 	MoveComp()->Fly();
 }
 
-void AGSFCharacter::LookOn_Implementation(const bool look)
+void AGSFCharacter::ManualAim_Implementation(const bool look)
 {
 	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
 	if(IsValid(camera))

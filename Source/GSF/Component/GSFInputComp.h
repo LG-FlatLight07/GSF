@@ -83,9 +83,9 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bPresseBulletKey;
 	UPROPERTY(BlueprintReadOnly)
-	bool bConcentrationKey;
+	bool bPressedConcentrationKey;
 	UPROPERTY(BlueprintReadOnly)
-	bool bPressedLookOnKey;
+	bool bPressedManualAimKey;
 	// 単押し
 	UPROPERTY(BlueprintReadOnly)
 	bool bFly;
@@ -126,8 +126,8 @@ private:
 	void InputAxis_Yaw(const float Value);
 	void InputAxis_MoveForward(const float Value);
 	void InputAxis_MoveRight(const float Value);
-	void InputAction_LookOn();
-	void InputAction_LookOn_Released();
+	void InputAction_ManualAim();
+	void InputAction_ManualAim_Released();
 	void InputAction_Attack();
 	void InputAction_AirDash();
 	void InputAction_AirDash_Released();

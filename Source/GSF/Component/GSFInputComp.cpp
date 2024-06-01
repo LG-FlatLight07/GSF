@@ -37,8 +37,8 @@ void UGSFInputComp::SetupInputComp(UInputComponent* PlayerInputComponent)
 		PlayerInputComponent->BindAxis("Yaw", this, &UGSFInputComp::InputAxis_Yaw);
 		
 		PlayerInputComponent->BindAction("Attack", IE_Pressed,  this, &UGSFInputComp::InputAction_Attack);
-		PlayerInputComponent->BindAction("LockOn", IE_Pressed,  this, &UGSFInputComp::InputAction_LookOn);
-		PlayerInputComponent->BindAction("LockOn", IE_Released,  this, &UGSFInputComp::InputAction_LookOn_Released);
+		PlayerInputComponent->BindAction("ManualAim", IE_Pressed,  this, &UGSFInputComp::InputAction_ManualAim);
+		PlayerInputComponent->BindAction("ManualAim", IE_Released,  this, &UGSFInputComp::InputAction_ManualAim_Released);
 		PlayerInputComponent->BindAction("AirDash", IE_Pressed,  this, &UGSFInputComp::InputAction_AirDash);
 		PlayerInputComponent->BindAction("AirDash", IE_Released, this, &UGSFInputComp::InputAction_AirDash_Released);
 		PlayerInputComponent->BindAction("Bullet", IE_Pressed,  this, &UGSFInputComp::InputAction_Bullet);
@@ -239,18 +239,18 @@ void UGSFInputComp::InputAction_Attack()
 	}
 }
 
-void UGSFInputComp::InputAction_LookOn()
+void UGSFInputComp::InputAction_ManualAim()
 {
 	if(!character)return;
 
-	bPressedLookOnKey = true;
-	character->LookOn(bPressedLookOnKey);
+	bPressedManualAimKey = true;
+	character->ManualAim(bPressedManualAimKey);
 }
 
-void UGSFInputComp::InputAction_LookOn_Released()
+void UGSFInputComp::InputAction_ManualAim_Released()
 {
-	bPressedLookOnKey = false;
-	character->LookOn(bPressedLookOnKey);
+	bPressedManualAimKey = false;
+	character->ManualAim(bPressedManualAimKey);
 }
 
 void UGSFInputComp::InputAction_AirDash()
@@ -298,7 +298,7 @@ void UGSFInputComp::InputAction_Bullet_Released()
 
 void UGSFInputComp::InputAction_Concentration()
 {
-	bConcentrationKey = true;
+	bPressedConcentrationKey = true;
 	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
 	UGameplayStatics::GetPlayerController(GetWorld(),0)->SetViewTargetWithBlend(camera, 0.1f);
 	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.2f);
@@ -306,7 +306,7 @@ void UGSFInputComp::InputAction_Concentration()
 
 void UGSFInputComp::InputAction_Concentration_Released()
 {
-	bConcentrationKey = false;
+	bPressedConcentrationKey = false;
 	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
 	UGameplayStatics::GetPlayerController(GetWorld(),0)->SetViewTargetWithBlend(camera, 0.1f);
 	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.f);

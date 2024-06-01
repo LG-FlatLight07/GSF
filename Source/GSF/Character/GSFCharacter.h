@@ -142,8 +142,8 @@ public:
 	void Fly_Implementation();
 	/// @brief ロックオン
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void LookOn(const bool look);
-	void LookOn_Implementation(const bool look);
+	void ManualAim(const bool look);
+	void ManualAim_Implementation(const bool look);
 	
 	/*------------------------------------------------------------------------------------------------------------------------------
 	* 入力制御
