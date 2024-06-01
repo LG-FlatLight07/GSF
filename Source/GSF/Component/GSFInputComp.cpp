@@ -241,6 +241,8 @@ void UGSFInputComp::InputAction_ManualAim()
 	if(!character)return;
 
 	InputAction_Concentration_Released();
+
+	character->MoveComp()->GraidEnd();
 	
 	bPressedManualAimKey = true;
 	character->ManualAim(bPressedManualAimKey);

@@ -85,6 +85,11 @@ void AGSFCharacter::Graid_Implementation(const bool key)
 {
 	if(key)
 	{
+		if(InputComp()->bPressedManualAimKey)
+		{
+			return;
+		}
+		
 		UE_LOG(LogTemp, Log, TEXT("Graid"));
 		
 		MoveComp()->Graid();
@@ -97,6 +102,12 @@ void AGSFCharacter::Graid_Implementation(const bool key)
 
 void AGSFCharacter::AirDash_Implementation()
 {
+
+	if(InputComp()->bPressedManualAimKey)
+	{
+		return;
+	}
+	
 	UE_LOG(LogTemp, Log, TEXT("AirDash"));
 
 	MoveComp()->AirDash();
@@ -104,15 +115,27 @@ void AGSFCharacter::AirDash_Implementation()
 
 void AGSFCharacter::AirJump_Implementation()
 {
-	UE_LOG(LogTemp, Log, TEXT("AirJump"));
 
+	if(InputComp()->bPressedManualAimKey)
+	{
+		return;
+	}
+	
+	UE_LOG(LogTemp, Log, TEXT("AirJump"));
+	
 	MoveComp()->AirJump();
 }
 
 void AGSFCharacter::Fly_Implementation()
 {
-	UE_LOG(LogTemp, Log, TEXT("Fly"));
+
+	if(InputComp()->bPressedManualAimKey)
+	{
+		return;
+	}
 	
+	UE_LOG(LogTemp, Log, TEXT("Fly"));
+
 	MoveComp()->Fly();
 }
 
