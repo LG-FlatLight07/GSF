@@ -122,8 +122,8 @@ void AGSFCharacter::ManualAim_Implementation(const bool look)
 	if(IsValid(camera))
 	{
 		camera->SetManualAim(look);
-		MoveComp()->SetFloat(look);
 	}
+	MoveComp()->SetFloat(look);
 }
 
 // Called to bind functionality to input

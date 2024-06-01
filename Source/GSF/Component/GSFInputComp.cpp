@@ -198,9 +198,6 @@ void UGSFInputComp::InputAxis_Pitch(const float Value)
 	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
 	if(IsValid(camera))
 		camera->InputAxis_Pitch(Value);
-	AGSFCamera* c_camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
-	if(IsValid(c_camera))
-		c_camera->InputAxis_Pitch(Value);
 }
 
 void UGSFInputComp::InputAxis_Yaw(const float Value)
@@ -208,9 +205,6 @@ void UGSFInputComp::InputAxis_Yaw(const float Value)
 	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
 	if(IsValid(camera))
 		camera->InputAxis_Yaw(Value);
-	AGSFCamera* c_camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
-	if(IsValid(c_camera))
-		c_camera->InputAxis_Yaw(Value);
 }
 
 void UGSFInputComp::InputAxis_MoveForward(const float Value)

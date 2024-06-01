@@ -25,6 +25,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	APawn* controlledPawn;
+	
+	// 入力
+	UPROPERTY(BlueprintReadOnly)
+	FVector2D inputValue;
 
 	// デッドゾーン
 	UPROPERTY(EditAnywhere)
@@ -67,8 +71,6 @@ private:
 	bool bDeadZone;
 	// マニュアルエイム
 	bool bManualAim;
-	// 入力
-	FVector2D inputValue;
 	
 public:
 	AGSFCamera();
