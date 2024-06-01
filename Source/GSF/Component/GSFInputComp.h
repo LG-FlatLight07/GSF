@@ -82,9 +82,11 @@ public:
 	bool bPresseGraidKey;
 	UPROPERTY(BlueprintReadOnly)
 	bool bPresseBulletKey;
-	// 単押し
 	UPROPERTY(BlueprintReadOnly)
-	bool bLookOn;
+	bool bConcentrationKey;
+	UPROPERTY(BlueprintReadOnly)
+	bool bPressedLookOnKey;
+	// 単押し
 	UPROPERTY(BlueprintReadOnly)
 	bool bFly;
 	
@@ -131,4 +133,6 @@ private:
 	void InputAction_AirDash_Released();
 	void InputAction_Bullet();
 	void InputAction_Bullet_Released();
+	void InputAction_Concentration();
+	void InputAction_Concentration_Released();
 };

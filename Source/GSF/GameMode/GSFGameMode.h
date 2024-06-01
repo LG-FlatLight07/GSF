@@ -15,6 +15,8 @@ class GSF_API AGSFGameMode : public AGameMode
 public:
 	UPROPERTY(BlueprintReadWrite)
 	AGSFCamera* camera;
+	UPROPERTY(BlueprintReadWrite)
+	AGSFCamera* c_camera;
 	
 protected:
 	UFUNCTION()

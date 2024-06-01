@@ -37,12 +37,14 @@ void UGSFInputComp::SetupInputComp(UInputComponent* PlayerInputComponent)
 		PlayerInputComponent->BindAxis("Yaw", this, &UGSFInputComp::InputAxis_Yaw);
 		
 		PlayerInputComponent->BindAction("Attack", IE_Pressed,  this, &UGSFInputComp::InputAction_Attack);
-		PlayerInputComponent->BindAction("LookOn", IE_Pressed,  this, &UGSFInputComp::InputAction_LookOn);
-		PlayerInputComponent->BindAction("LookOn", IE_Released,  this, &UGSFInputComp::InputAction_LookOn_Released);
+		PlayerInputComponent->BindAction("LockOn", IE_Pressed,  this, &UGSFInputComp::InputAction_LookOn);
+		PlayerInputComponent->BindAction("LockOn", IE_Released,  this, &UGSFInputComp::InputAction_LookOn_Released);
 		PlayerInputComponent->BindAction("AirDash", IE_Pressed,  this, &UGSFInputComp::InputAction_AirDash);
 		PlayerInputComponent->BindAction("AirDash", IE_Released, this, &UGSFInputComp::InputAction_AirDash_Released);
 		PlayerInputComponent->BindAction("Bullet", IE_Pressed,  this, &UGSFInputComp::InputAction_Bullet);
 		PlayerInputComponent->BindAction("Bullet", IE_Released, this, &UGSFInputComp::InputAction_Bullet_Released);
+		PlayerInputComponent->BindAction("Concentration", IE_Pressed,  this, &UGSFInputComp::InputAction_Concentration);
+		PlayerInputComponent->BindAction("Concentration", IE_Released, this, &UGSFInputComp::InputAction_Concentration_Released);
 	}
 }
 
@@ -196,6 +198,9 @@ void UGSFInputComp::InputAxis_Pitch(const float Value)
 	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
 	if(IsValid(camera))
 		camera->InputAxis_Pitch(Value);
+	AGSFCamera* c_camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
+	if(IsValid(c_camera))
+		c_camera->InputAxis_Pitch(Value);
 }
 
 void UGSFInputComp::InputAxis_Yaw(const float Value)
@@ -203,6 +208,9 @@ void UGSFInputComp::InputAxis_Yaw(const float Value)
 	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
 	if(IsValid(camera))
 		camera->InputAxis_Yaw(Value);
+	AGSFCamera* c_camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
+	if(IsValid(c_camera))
+		c_camera->InputAxis_Yaw(Value);
 }
 
 void UGSFInputComp::InputAxis_MoveForward(const float Value)
@@ -235,14 +243,14 @@ void UGSFInputComp::InputAction_LookOn()
 {
 	if(!character)return;
 
-	bLookOn = true;
-	character->LookOn(bLookOn);
+	bPressedLookOnKey = true;
+	character->LookOn(bPressedLookOnKey);
 }
 
 void UGSFInputComp::InputAction_LookOn_Released()
 {
-	bLookOn = false;
-	character->LookOn(bLookOn);
+	bPressedLookOnKey = false;
+	character->LookOn(bPressedLookOnKey);
 }
 
 void UGSFInputComp::InputAction_AirDash()
@@ -286,4 +294,20 @@ void UGSFInputComp::InputAction_Bullet()
 void UGSFInputComp::InputAction_Bullet_Released()
 {
 	bPresseBulletKey = false;
+}
+
+void UGSFInputComp::InputAction_Concentration()
+{
+	bConcentrationKey = true;
+	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->c_camera;
+	UGameplayStatics::GetPlayerController(GetWorld(),0)->SetViewTargetWithBlend(camera, 0.1f);
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.2f);
+}
+
+void UGSFInputComp::InputAction_Concentration_Released()
+{
+	bConcentrationKey = false;
+	AGSFCamera* camera = Cast<AGSFGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->camera;
+	UGameplayStatics::GetPlayerController(GetWorld(),0)->SetViewTargetWithBlend(camera, 0.1f);
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.f);
 }

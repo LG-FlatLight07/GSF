@@ -17,7 +17,7 @@ AGSFCamera::AGSFCamera()
 	arrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 	boom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Boom"));
 	camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-
+	
 	if(arrow)
 		RootComponent = arrow;
 	if(arrow && boom)
@@ -29,10 +29,8 @@ AGSFCamera::AGSFCamera()
 void AGSFCamera::BeginPlay()
 {
 	Super::BeginPlay();
-
-	UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetViewTarget(this);
+	
 	controlledPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	//Cast<AGSFCharacter>(controlledPawn)->cameraComp = this;
 }
 
 void AGSFCamera::UpdateRotation(const float DeltaTime)

@@ -23,7 +23,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UCameraComponent* camera;
 
-protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	APawn* controlledPawn;
 
@@ -36,18 +35,18 @@ protected:
 	float yaw_sensitivity = 2.f;
 
 	UPROPERTY(EditAnywhere)
-	float pitch_min = -40.f;
+	float pitch_min = -50.f;
 	UPROPERTY(EditAnywhere)
-	float current_pitch_min = -40.f;
+	float current_pitch_min = -50.f;
 	UPROPERTY(EditAnywhere)
-	float dive_pitch_min = -40.f;
+	float dive_pitch_min = -85.f;
 	
 	UPROPERTY(EditAnywhere)
 	float pitch_max = 65.f;
 	UPROPERTY(EditAnywhere)
 	float current_pitch_max = 65.f;
 	UPROPERTY(EditAnywhere)
-	float dive_pitch_max = 30.f;
+	float dive_pitch_max = -60.f;
 	
 	UPROPERTY(EditAnywhere)
 	float boom_length_min = 180.f;
@@ -57,11 +56,11 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float boom_length_max = 500.f;
 	UPROPERTY(EditAnywhere)
-	float dive_boom_length_max = 400.f;
+	float dive_boom_length_max = 170.f;
 	UPROPERTY(EditAnywhere)
-	float graid_boom_length_max = 520.f;
+	float graid_boom_length_max = 700.f;
 	UPROPERTY(EditAnywhere)
-	float fly_boom_length_max = 480.f;
+	float fly_boom_length_max = 350.f;
 	
 private:
 	// デッドゾーン
