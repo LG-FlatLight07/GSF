@@ -538,6 +538,14 @@ void UGSFMoveComp::UpdateRotation(float DeltaTime)
 		return;
 	}
 
+	// wire移動中は常に移動方向
+	if(bWire)
+	{
+		FRotator rotation = UKismetMathLibrary::FindLookAtRotation(character->GetActorLocation(), character->GetActorLocation() + wireMoveVector);
+		character->SetActorRotation(rotation);
+		return;
+	}
+
 	// マニュアルエイム中は常にカメラ方向
 	if(character->InputComp()->bPressedManualAimKey)
 	{
