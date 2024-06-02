@@ -144,6 +144,19 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ManualAim(const bool look);
 	void ManualAim_Implementation(const bool look);
+	/// @brief 攻撃
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ConcentrationAttack();
+	void ConcentrationAttack_Implementation();
+	/// @brief 攻撃
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Attack();
+	void Attack_Implementation();
+	/// @brief ビーム
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ConcentrationBeam();
+	void ConcentrationBeam_Implementation();
+
 	
 	/*------------------------------------------------------------------------------------------------------------------------------
 	* 入力制御

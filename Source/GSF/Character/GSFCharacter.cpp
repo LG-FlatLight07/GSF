@@ -74,6 +74,10 @@ void AGSFCharacter::TakeAction(EInputActions Action)
 	{
 		Fly();
 	}
+	if(Action == EInputActions::Attack)
+	{
+		Attack();
+	}
 }
 
 bool AGSFCharacter::IsTakingAction() const
@@ -147,6 +151,21 @@ void AGSFCharacter::ManualAim_Implementation(const bool look)
 		camera->SetManualAim(look);
 	}
 	MoveComp()->SetFloat(look);
+}
+
+void AGSFCharacter::ConcentrationAttack_Implementation()
+{
+	
+}
+
+void AGSFCharacter::Attack_Implementation()
+{
+	
+}
+
+void AGSFCharacter::ConcentrationBeam_Implementation()
+{
+	
 }
 
 // Called to bind functionality to input

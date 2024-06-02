@@ -126,23 +126,21 @@ void UGSFMoveComp::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 
 	// Wire移動
 	// いつか書き直します
-	// if (bWire)
-	// {
-	// 	float frame;
-	// 	frame = 1.0f / DeltaTime;
-	// 	FVector_NetQuantizeNormal outHitNormal;
-	// 	if (SweepMove(wireMoveVector, (wireMoveSpeed / frame) * TIME/*一時的な奴です*/, &outHitNormal))
-	// 	{
-	// 		FVector alongWallVector = GetAlongWallVector(outHitNormal, wireMoveVector);
-	// 		SweepMove(alongWallVector, wireMoveSpeed / frame * TIME/*一時的な奴です*/, &outHitNormal);
-	// 	}
-	// 	currentWireMoveTime += DeltaTime * TIME/*一時的な奴です*/;
-	// 	if (wireMoveTime <= currentWireMoveTime)
-	// 	{
-	// 		bWire = false;
-	// 		currentWireMoveTime = 0;
-	// 	}
-	// }
+	if (bWire)
+	{
+		float frame = 1.0f / DeltaTime;
+		SweepMove(wireMoveVector, (wireMoveSpeed / frame) * TIME/*一時的な奴です*/);
+		currentWireMoveTime += DeltaTime * TIME;
+		if(wireMoveTime != 0.f)
+		{
+			if (wireMoveTime <= currentWireMoveTime)
+			{
+				bWire = false;
+				currentWireMoveTime = 0;
+				wireMoveTime = 0.f;
+			}
+		}
+	}
 
 	// 進行ベクトルを保存
 	if(!inputValue.IsZero())
@@ -269,23 +267,33 @@ void UGSFMoveComp::GraidEnd()
 /// @brief 指定時間で目標地点に移動
 /// @param TargetPosition 目標
 /// @param TimeLimit 時間
-void UGSFMoveComp::WireMove(FVector TargetPosition, float TimeLimit)
+void UGSFMoveComp::WireMove(FVector TargetPosition, float TimeLimit = 0.f)
 {
 	float distance = FVector::Distance(TargetPosition, character->GetActorLocation());
-	wireMoveTime = TimeLimit;
-	wireMoveSpeed = distance / TimeLimit;
+	if(TimeLimit > 0)
+	{
+		wireMoveTime = TimeLimit;
+		wireMoveSpeed = distance / TimeLimit;
+	}
+	else
+	{
+		wireMoveSpeed = wireSpeed;
+	}
 	wireMoveVector = TargetPosition - character->GetActorLocation();
 	wireMoveVector.Normalize();
+	currentWireMoveTime = 0;
 	bWire = true;
 
 	// Wire以外の挙動をキャンセル
 	bForce = false;
 	bFly = false;
 	beforeGravityAcceleration = 0;
-	currentWireMoveTime = 0;
+
+
 	ResetAirbornTime();
 	ResetGravityBias();
 	ResetSpeedBias();
+	return;
 }
 
 /// @brief アニメーションの移動量更新

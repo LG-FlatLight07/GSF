@@ -226,6 +226,11 @@ void UGSFInputComp::InputAxis_MoveRight(const float Value)
 
 void UGSFInputComp::InputAction_Attack()
 {
+	if(bPressedConcentrationKey)
+	{
+		character->ConcentrationAttack();
+	}
+		
 	if (character->IsTakingAction())
 	{
 		WaitForAction(EInputActions::Attack);
@@ -298,6 +303,11 @@ void UGSFInputComp::InputAction_AirDash_Released()
 
 void UGSFInputComp::InputAction_Bullet()
 {
+	if(bPressedConcentrationKey)
+	{
+		character->ConcentrationBeam();
+	}
+	
 	bPresseBulletKey = true;
 }
 

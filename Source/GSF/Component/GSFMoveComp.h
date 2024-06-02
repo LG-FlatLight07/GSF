@@ -31,7 +31,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bFloat;
 	/// @brief Wire移動中
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	bool bWire;
 	/// @brief 吹っ飛び中
 	UPROPERTY(BlueprintReadOnly)
@@ -177,6 +177,9 @@ public:
 	/// @brief 振り向き速度
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float rotationSpeed = 15.f;
+	/// @brief Wire移動速度
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float wireSpeed = 200.f;
 	
 public:
 	UGSFMoveComp();
