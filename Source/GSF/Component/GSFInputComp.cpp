@@ -229,6 +229,7 @@ void UGSFInputComp::InputAction_Attack()
 	if(bPressedConcentrationKey)
 	{
 		character->ConcentrationAttack();
+		return;
 	}
 		
 	if (character->IsTakingAction())
